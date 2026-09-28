@@ -131,7 +131,10 @@ function setupShaders() {
         uniform mat4 uModelMatrix; // the model matrix
 
         void main(void) {
-            gl_Position = uModelMatrix * vec4(vertexPosition, 1.0);
+            vec4 worldPosition = uModelMatrix * vec4(vertexPosition, 1.0);
+            gl_Position = vec4(2.0 * worldPosition.xy - 1.0,
+                              2.0 * worldPosition.z - 1.0,
+                              worldPosition.w);
         }
     `;
     
@@ -180,19 +183,34 @@ function setupShaders() {
 function renderTriangles() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // clear frame/depth buffers
     
-    // define the modeling matrix for the first set 
-    inputTriangles[0].mMatrix = mat4.create(); // modeling mat for tri set
-    var setCenter = vec3.fromValues(.25,.75,0);  // center coords of tri set 
-    mat4.fromTranslation(inputTriangles[0].mMatrix,vec3.negate(vec3.create(),setCenter)); // translate to origin
+    // Scale and rotate the triangle around its center, then place it at lower left.
+    var triangleCenter = vec3.fromValues(.25,.7,0);
+    var triangleTarget = vec3.fromValues(.14,.393,0);
+    inputTriangles[0].mMatrix = mat4.create();
+    mat4.fromTranslation(inputTriangles[0].mMatrix,
+                         vec3.negate(vec3.create(),triangleCenter));
     mat4.multiply(inputTriangles[0].mMatrix,
-                  mat4.fromRotation(mat4.create(),Math.PI/2,vec3.fromValues(0,0,1)),
-                  inputTriangles[0].mMatrix); // rotate 90 degs
+                  mat4.fromScaling(mat4.create(),vec3.fromValues(.45,.45,1)),
+                  inputTriangles[0].mMatrix);
     mat4.multiply(inputTriangles[0].mMatrix,
-                  mat4.fromTranslation(mat4.create(),setCenter),
-                  inputTriangles[0].mMatrix); // move back to center
-        
-    // define the modeling matrix for the second set
+                  mat4.fromRotation(mat4.create(),3*Math.PI/4,vec3.fromValues(0,0,1)),
+                  inputTriangles[0].mMatrix);
+    mat4.multiply(inputTriangles[0].mMatrix,
+                  mat4.fromTranslation(mat4.create(),triangleTarget),
+                  inputTriangles[0].mMatrix);
+
+    // Rotate the square 45 degrees and shift it right.
+    var squareCenter = vec3.fromValues(.25,.25,0);
+    var squareTarget = vec3.fromValues(.375,.25,0);
     inputTriangles[1].mMatrix = mat4.create();
+    mat4.fromTranslation(inputTriangles[1].mMatrix,
+                         vec3.negate(vec3.create(),squareCenter));
+    mat4.multiply(inputTriangles[1].mMatrix,
+                  mat4.fromRotation(mat4.create(),Math.PI/4,vec3.fromValues(0,0,1)),
+                  inputTriangles[1].mMatrix);
+    mat4.multiply(inputTriangles[1].mMatrix,
+                  mat4.fromTranslation(mat4.create(),squareTarget),
+                  inputTriangles[1].mMatrix);
     
     for (var whichTriSet=0; whichTriSet<numTriangleSets; whichTriSet++) { 
         
